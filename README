@@ -1,3 +1,5 @@
+This is a fork of https://github.com/vim-scripts/IndexedSearch :)
+
 This is a mirror of http://www.vim.org/scripts/script.php?script_id=1682
 
 " This plugin redefines 6 search commands (/,?,n,N,*,#). At every
