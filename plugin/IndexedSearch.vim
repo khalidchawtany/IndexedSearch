@@ -86,24 +86,49 @@ command! ShowSearchIndex :call s:ShowCurrentSearchIndex(1,'')
 "                @/ and direction is restored at return from function
 "                We must have op invocation at the toplevel of mapping even though this
 "                makes mappings longer.
-nnoremap <silent>n :let v:errmsg=''<cr>:silent! norm! n<cr>:call <SID>ShowCurrentSearchIndex(0,'!')<cr>
-nnoremap <silent>N :let v:errmsg=''<cr>:silent! norm! N<cr>:call <SID>ShowCurrentSearchIndex(0,'!')<cr>
-nnoremap <silent>* :let v:errmsg=''<cr>:silent! norm! *<cr>:call <SID>ShowCurrentSearchIndex(0,'!')<cr>
-nnoremap <silent># :let v:errmsg=''<cr>:silent! norm! #<cr>:call <SID>ShowCurrentSearchIndex(0,'!')<cr>
 
 
-nnoremap <silent>\/        :call <SID>ShowCurrentSearchIndex(1,'')<cr>
-nnoremap <silent>\\        :call <SID>ShowCurrentSearchIndex(1,'')<cr>
-nnoremap <silent>g/        :call <SID>ShowCurrentSearchIndex(1,'')<cr>
+function <SID>ShowSearchIndexFunction(cmd, force, passed_cmd )
+    let a:wordUnderCursor = '\<'.expand("<cword>").'\>'
+    if(a:cmd == '*' || a:cmd == '#')
+             let @/ = a:wordUnderCursor
+    endif
+    let v:errmsg=''
+    exe "silent! norm! ".a:cmd.( exists('g:IndexedSearch_AutoCenter')? "zz" : "" )
+    call <SID>ShowCurrentSearchIndex(a:force,a:passed_cmd)
+endfunction
 
+nnoremap <silent> <Plug>(ShowSearchIndex_n) :call <SID>ShowSearchIndexFunction('n',0,'!')<cr>
+nnoremap <silent> <Plug>(ShowSearchIndex_N) :call <SID>ShowSearchIndexFunction('N',0,'!')<cr>
+nnoremap <silent> <Plug>(ShowSearchIndex_Star) :call <SID>ShowSearchIndexFunction('*',0,'!')<cr>
+nnoremap <silent> <Plug>(ShowSearchIndex_Pound) :call <SID>ShowSearchIndexFunction('#',0,'!')<cr>
+    
+exe "nnoremap <Plug>(ShowSearchIndex_Forward) :call <SID>DelaySearchIndex(0,'')<cr>/".((exists('g:IndexedSearch_SaneRegEx'))?'\v':'')
+exe "nnoremap <Plug>(ShowSearchIndex_Backward) :call <SID>DelaySearchIndex(0,'')<cr>?".((exists('g:IndexedSearch_SaneRegEx'))?'\v':'')
+" if exists('g:IndexedSearch_SaneRegEx')
+"     nnoremap <Plug>(ShowSearchIndex_Forward) :call <SID>DelaySearchIndex(0,'')<cr>/\v
+"     nnoremap <Plug>(ShowSearchIndex_Backward) :call <SID>DelaySearchIndex(0,'')<cr>?\v
+" else
+"     nnoremap <Plug>(ShowSearchIndex_Forward) :call <SID>DelaySearchIndex(0,'')<cr>/
+"     nnoremap <Plug>(ShowSearchIndex_Backward) :call <SID>DelaySearchIndex(0,'')<cr>?
+" endif
+
+" nnoremap <silent>\/        :call <SID>ShowCurrentSearchIndex(1,'')<cr>
+" nnoremap <silent>\\        :call <SID>ShowCurrentSearchIndex(1,'')<cr>
+" nnoremap <silent>g/        :call <SID>ShowCurrentSearchIndex(1,'')<cr>
+
+if !exists('g:IndexedSearch_No_Default_Mappings')
+    nmap <silent>n <Plug>(ShowSearchIndex_n)
+    nmap <silent>N <Plug>(ShowSearchIndex_N)
+    nmap <silent>* <Plug>(ShowSearchIndex_Star)
+    nmap <silent># <Plug>(ShowSearchIndex_Pound)
+    nmap / <Plug>(ShowSearchIndex_Forward)
+    nmap ? <Plug>(ShowSearchIndex_Backward)
+endif
 
 " before 061120,  I had cmapping for <cr> which was very intrusive. Didn't work
 "                 with supertab iInde<c-x><c-p>(resulted in something like recursive <c-r>=
 " after  061120,  I remap [/?] instead of remapping <cr>. Works in vim6, too
-
-nnoremap / :call <SID>DelaySearchIndex(0,'')<cr>/
-nnoremap ? :call <SID>DelaySearchIndex(0,'')<cr>?
-
 
 let s:ScheduledEcho = ''
 let s:DelaySearchIndex = 0
@@ -207,7 +232,7 @@ func! s:CountCurrentSearchIndex(force, cmd)
     endif
     if @/ == '' | return "" | endif
     if version >= 700 
-		let save = winsaveview()
+        let save = winsaveview()
     endif
     let line = line('.')
     let vcol = virtcol('.')
@@ -227,10 +252,10 @@ func! s:CountCurrentSearchIndex(force, cmd)
         let s_opt = 'W'
     endwh
     if version >= 700
-		call winrestview(save)
-	else
-		exe line
-		exe "norm! ".vcol."|"
+        call winrestview(save)
+    else
+        exe line
+        exe "norm! ".vcol."|"
     endif
     if !a:force && num > g:search_index_maxhit
         if exact >= 0 
