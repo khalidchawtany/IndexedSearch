@@ -92,6 +92,10 @@ function <SID>ShowSearchIndexFunction(cmd, force, passed_cmd )
     let a:wordUnderCursor = '\<'.expand("<cword>").'\>'
     if(a:cmd == '*' || a:cmd == '#')
              let @/ = a:wordUnderCursor
+             let v:searchforward = (a:cmd=='*')? 1: 0
+             let s:prev_search_direction = v:searchforward
+    else
+        let v:searchforward = s:prev_search_direction
     endif
     let v:errmsg=''
     exe "silent! norm! ".a:cmd.( exists('g:IndexedSearch_AutoCenter')? "zz" : "" )
@@ -103,15 +107,13 @@ nnoremap <silent> <Plug>(ShowSearchIndex_N) :call <SID>ShowSearchIndexFunction('
 nnoremap <silent> <Plug>(ShowSearchIndex_Star) :call <SID>ShowSearchIndexFunction('*',0,'!')<cr>
 nnoremap <silent> <Plug>(ShowSearchIndex_Pound) :call <SID>ShowSearchIndexFunction('#',0,'!')<cr>
     
-exe "nnoremap <Plug>(ShowSearchIndex_Forward) :call <SID>DelaySearchIndex(0,'')<cr>/".((exists('g:IndexedSearch_SaneRegEx'))?'\v':'')
-exe "nnoremap <Plug>(ShowSearchIndex_Backward) :call <SID>DelaySearchIndex(0,'')<cr>?".((exists('g:IndexedSearch_SaneRegEx'))?'\v':'')
-" if exists('g:IndexedSearch_SaneRegEx')
-"     nnoremap <Plug>(ShowSearchIndex_Forward) :call <SID>DelaySearchIndex(0,'')<cr>/\v
-"     nnoremap <Plug>(ShowSearchIndex_Backward) :call <SID>DelaySearchIndex(0,'')<cr>?\v
-" else
-"     nnoremap <Plug>(ShowSearchIndex_Forward) :call <SID>DelaySearchIndex(0,'')<cr>/
-"     nnoremap <Plug>(ShowSearchIndex_Backward) :call <SID>DelaySearchIndex(0,'')<cr>?
-" endif
+exe "nnoremap <Plug>(ShowSearchIndex_Forward) 
+            \:call <SID>DelaySearchIndex(0,'')<cr>
+            \/".((exists('g:IndexedSearch_SaneRegEx'))?'\v':'')
+
+exe "nnoremap <Plug>(ShowSearchIndex_Backward) 
+            \:call <SID>DelaySearchIndex(0,'')<cr>
+            \?".((exists('g:IndexedSearch_SaneRegEx'))?'\v':'')
 
 " nnoremap <silent>\/        :call <SID>ShowCurrentSearchIndex(1,'')<cr>
 " nnoremap <silent>\\        :call <SID>ShowCurrentSearchIndex(1,'')<cr>
