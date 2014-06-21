@@ -1,4 +1,4 @@
-let g:indexed_search_colors=0
+let g:indexed_search_colors=1
 " File:         IndexedSearch.vim
 " Author:       Yakov Lerner <iler.ml@gmail.com>
 " URL:          http://www.vim.org/scripts/script.php?script_id=1682
@@ -94,13 +94,34 @@ function <SID>ShowSearchIndexFunction(cmd, force, passed_cmd )
              let @/ = a:wordUnderCursor
              let v:searchforward = (a:cmd=='*')? 1: 0
              let s:prev_search_direction = v:searchforward
+             let s:search_direction_change_triggered = 1
     else
-        let v:searchforward = s:prev_search_direction
+        if(exists('s:search_direction_change_triggered'))
+            let v:searchforward = s:prev_search_direction
+        endif
     endif
     let v:errmsg=''
     exe "silent! norm! ".a:cmd.( exists('g:IndexedSearch_AutoCenter')? "zz" : "" )
     call <SID>ShowCurrentSearchIndex(a:force,a:passed_cmd)
 endfunction
+
+
+
+" The problem is that the search register is saved before a function 
+" call and restored after, so when your function returns the search 
+" register no longer contains "this".  See ":help 
+" function-search-undo". 
+"
+" One solution would be 
+"
+"     function! XXXX() 
+"         execute '/this' 
+"         return @/ 
+"     endfunction 
+"
+" and to use the following instead of ":call XXXX()". 
+"
+"     :let @/ = XXXX() 
 
 nnoremap <silent> <Plug>(ShowSearchIndex_n) :call <SID>ShowSearchIndexFunction('n',0,'!')<cr>
 nnoremap <silent> <Plug>(ShowSearchIndex_N) :call <SID>ShowSearchIndexFunction('N',0,'!')<cr>
@@ -219,7 +240,7 @@ func! s:CountCurrentSearchIndex(force, cmd)
             echomsg v:errmsg
             echohl None
         endif
-        
+
         if line('$') >= g:search_index_max
             " for large files, preserve original error messages and add nothing
             return ""
@@ -281,12 +302,15 @@ func! s:CountCurrentSearchIndex(force, cmd)
         "let prefix = "At single match"
         let prefix = "Single match"
     elseif exact == 1
-        let s:Highlight = "Search"
+ 
+        " let s:Highlight = "Search"
+        let s:Highlight = "IndexedSearchFirst"
         "let prefix = "At 1st  match, # 1 of " . num
         "let prefix = "First match, # 1 of " . num
         let prefix = "First of " . num . " matches "
     elseif exact == num
-        let s:Highlight = "LineNr"
+        " let s:Highlight = "LineNr"
+        let s:Highlight = "IndexedSearchLast"
         "let prefix = "Last match, # ".num." of " . num
         "let prefix = "At last match, # ".num." of " . num
         let prefix = "Last of " . num . " matches "
